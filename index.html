@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An AI Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #111;
+            color: white;
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            background-color: #222;
+            display: block;
+            margin: 0 auto;
+            border: 2px solid #4CAF50;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #message {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #4CAF50;
+        }
+        footer {
+            margin-top:20px;
+            color:#888;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🤖 AI Booth Interactive Shooting Game 🚀</h1>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<p>Destroy 10 Manual targets in 20 seconds to win a prize!</p>
+<button onclick="location.reload()">Restart Game</button>
+<div id="message"></div>
+
+<footer>Designed by Prashant Rai</footer>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const message = document.getElementById('message');
+
+let gun = { x: canvas.width / 2, width: 60, height: 20 };
+let bullets = [];
+let targets = [];
+let score = 0;
+let gameInterval;
+let gameTime = 20;
+
+function drawGun() {
+    ctx.fillStyle = '#4CAF50';
+    ctx.fillRect(gun.x - gun.width / 2, canvas.height - gun.height, gun.width, gun.height);
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px Arial';
+    ctx.fillText('AI', gun.x - 10, canvas.height - 5);
+}
+
+function createTarget() {
+    return {
+        x: Math.random() * (canvas.width - 30),
+        y: 0,
+        size: 30,
+        speed: 1 + Math.random() * 2
+    };
+}
+
+function drawTarget(target) {
+    ctx.fillStyle = '#ff0000';
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '12px Arial';
+    ctx.fillText('Manual', target.x - 18, target.y + 4);
+}
+
+function shootBullet() {
+    bullets.push({ x: gun.x, y: canvas.height - gun.height, speed: 5 });
+}
+
+function drawBullets() {
+    bullets.forEach((bullet, index) => {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(bullet.x - 2, bullet.y, 4, 10);
+        bullet.y -= bullet.speed;
+        if (bullet.y < 0) bullets.splice(index, 1);
+    });
+}
+
+function updateTargets() {
+    targets.forEach((target, index) => {
+        target.y += target.speed;
+        if (target.y > canvas.height) targets.splice(index, 1);
+    });
+}
+
+function checkCollisions() {
+    bullets.forEach((bullet, bIndex) => {
+        targets.forEach((target, tIndex) => {
+            const dist = Math.hypot(bullet.x - target.x, bullet.y - target.y);
+            if (dist < target.size) {
+                targets.splice(tIndex, 1);
+                bullets.splice(bIndex, 1);
+                score++;
+                if(score >= 10) {
+                    message.textContent = `🎉 You won! You destroyed ${score} Manual targets! Claim your prize! 🎉`;
+                    clearInterval(gameInterval);
+                }
+            }
+        });
+    });
+}
+
+canvas.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    gun.x = event.clientX - rect.left;
+});
+
+canvas.addEventListener('click', shootBullet);
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGun();
+    drawBullets();
+    targets.forEach(drawTarget);
+}
+
+function gameLoop() {
+    if (targets.length < 3) targets.push(createTarget());
+    updateTargets();
+    checkCollisions();
+    render();
+}
+
+window.onload = function() {
+    gameInterval = setInterval(gameLoop, 20);
+    setTimeout(() => {
+        clearInterval(gameInterval);
+        if(score < 10) {
+            message.textContent = `⏰ Time's up! You destroyed ${score} Manual targets. Try again! ⏰`;
+        }
+    }, gameTime * 1000);
+};
+</script>
+
+</body>
+</html>
