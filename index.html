@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>An AI Game</title>
+    <title>AI Expo Interactive Timed Quiz</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,153 +11,143 @@
             background-color: #111;
             color: white;
             margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            background-color: #222;
-            display: block;
-            margin: 0 auto;
-            border: 2px solid #4CAF50;
+            padding: 20px;
         }
         button {
             padding: 10px 20px;
-            margin-top: 20px;
+            margin-top: 10px;
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             font-size: 16px;
+            width: 80%;
+            max-width: 300px;
         }
         button:hover {
             background-color: #45a049;
         }
-        #message {
-            margin-top: 15px;
+        .question {
+            font-size: 20px;
+            padding: 15px;
+            background-color: #333;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 20px;
+            width: 90%;
+            max-width: 600px;
+        }
+        .timer {
             font-size: 18px;
-            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 16px;
+            cursor: pointer;
         }
         footer {
-            margin-top:20px;
-            color:#888;
+            margin-top: 20px;
+            color: #888;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .question, button {
+                width: 100%;
+            }
+            .option-label {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
 
-<h1>🤖 AI Booth Interactive Shooting Game 🚀</h1>
-<canvas id="gameCanvas" width="600" height="400"></canvas>
-<p>Destroy 10 Manual targets in 20 seconds to win a prize!</p>
-<button onclick="location.reload()">Restart Game</button>
-<div id="message"></div>
+<h1>🤖 AI Expo 30-Second Quiz 🚀</h1>
+<div class="timer" id="timer">Time Left: 30</div>
+<div id="quiz"></div>
+<div class="result" id="result"></div>
 
 <footer>Designed by Prashant Rai</footer>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const message = document.getElementById('message');
+const questions = [
+    {question: "Which is a hallmark of Generative AI?", answers: ["Automating repetitive workflows", "Creating original content like text, images, or code", "Predicting weather patterns", "Storing data securely"], correct: 1},
+    {question: "Gemini, Google's AI model, is particularly known for being:", answers: ["Text-only and limited to English", "Multimodal (understanding text, images, and more)", "Hardware-focused for robotics", "Only used in Google Search"], correct: 1},
+    {question: "What’s a key use case of AI in cybersecurity today?", answers: ["Auto-blocking phishing emails", "Automating password creation", "Encrypting Wi-Fi signals", "Replacing firewalls"], correct: 0},
+    {question: "Why is Python popular for AI development?", answers: ["Built-in hardware accelerators", "Simple, rich AI libraries, large community support", "Runs only on supercomputers", "Fastest compiled language"], correct: 1},
+    {question: "Major ethical concern with Gen AI?", answers: ["Slow execution time", "Model hallucinations and misinformation", "File storage limits", "Keyboard shortcuts"], correct: 1},
+    {question: "Which AI chatbot was released first publicly?", answers: ["Google Bard", "OpenAI’s ChatGPT", "Anthropic Claude", "Microsoft Copilot"], correct: 1},
+    {question: "AI in workforce management mainly helps:", answers: ["Adding manual reviews", "Reducing time to go-live and boosting productivity", "Slowing project delivery", "Replacing developers"], correct: 1},
+    {question: "AI tricked into revealing data via cleverly worded prompt is called:", answers: ["Model Drift", "Data Poisoning", "Prompt Injection", "Brute Force"], correct: 2},
+    {question: "Output of Python code `print('AI' * 3)`?", answers: ["AI * 3", "333", "AIAIAI", "Error"], correct: 2},
+    {question: "NOT a realistic short-term application of Gen AI?", answers: ["AI-generated art and music", "Automating code documentation", "Fully autonomous general-purpose human replacement", "Drafting business reports"], correct: 2}
+];
 
-let gun = { x: canvas.width / 2, width: 60, height: 20 };
-let bullets = [];
-let targets = [];
+let currentQuestion = 0;
 let score = 0;
-let gameInterval;
-let gameTime = 20;
+let timer;
+let timeLeft = 30;
 
-function drawGun() {
-    ctx.fillStyle = '#4CAF50';
-    ctx.fillRect(gun.x - gun.width / 2, canvas.height - gun.height, gun.width, gun.height);
-    ctx.fillStyle = '#fff';
-    ctx.font = '14px Arial';
-    ctx.fillText('AI', gun.x - 10, canvas.height - 5);
+function loadQuestion() {
+    if (currentQuestion >= questions.length || timeLeft <= 0) {
+        clearInterval(timer);
+        document.getElementById('quiz').innerHTML = `Quiz Completed! Your score: ${score}/${questions.length}`;
+        document.getElementById('timer').style.display = 'none';
+        return;
+    }
+
+    const q = questions[currentQuestion];
+    document.getElementById('quiz').innerHTML = `
+        <div class="question">${q.question}</div>
+        <div class="options-container">
+            ${q.answers.map((ans, idx) => `
+                <label class="option-label">
+                    <input type="radio" name="answer" value="${idx}">${ans}
+                </label>
+            `).join('')}
+        </div>
+        <button onclick="submitAnswer()">Submit</button>
+    `;
 }
 
-function createTarget() {
-    return {
-        x: Math.random() * (canvas.width - 30),
-        y: 0,
-        size: 30,
-        speed: 1 + Math.random() * 2
-    };
+function countdown() {
+    timeLeft--;
+    document.getElementById('timer').textContent = `Time Left: ${timeLeft}`;
+
+    if (timeLeft <= 0) {
+        clearInterval(timer);
+        loadQuestion();
+    }
 }
 
-function drawTarget(target) {
-    ctx.fillStyle = '#ff0000';
-    ctx.beginPath();
-    ctx.arc(target.x, target.y, target.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = '12px Arial';
-    ctx.fillText('Manual', target.x - 18, target.y + 4);
-}
-
-function shootBullet() {
-    bullets.push({ x: gun.x, y: canvas.height - gun.height, speed: 5 });
-}
-
-function drawBullets() {
-    bullets.forEach((bullet, index) => {
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(bullet.x - 2, bullet.y, 4, 10);
-        bullet.y -= bullet.speed;
-        if (bullet.y < 0) bullets.splice(index, 1);
-    });
-}
-
-function updateTargets() {
-    targets.forEach((target, index) => {
-        target.y += target.speed;
-        if (target.y > canvas.height) targets.splice(index, 1);
-    });
-}
-
-function checkCollisions() {
-    bullets.forEach((bullet, bIndex) => {
-        targets.forEach((target, tIndex) => {
-            const dist = Math.hypot(bullet.x - target.x, bullet.y - target.y);
-            if (dist < target.size) {
-                targets.splice(tIndex, 1);
-                bullets.splice(bIndex, 1);
-                score++;
-                if(score >= 10) {
-                    message.textContent = `🎉 You won! You destroyed ${score} Manual targets! Claim your prize! 🎉`;
-                    clearInterval(gameInterval);
-                }
-            }
-        });
-    });
-}
-
-canvas.addEventListener('mousemove', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    gun.x = event.clientX - rect.left;
-});
-
-canvas.addEventListener('click', shootBullet);
-
-function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGun();
-    drawBullets();
-    targets.forEach(drawTarget);
-}
-
-function gameLoop() {
-    if (targets.length < 3) targets.push(createTarget());
-    updateTargets();
-    checkCollisions();
-    render();
+function submitAnswer() {
+    const selectedOption = document.querySelector('input[name="answer"]:checked');
+    if (selectedOption && parseInt(selectedOption.value) === questions[currentQuestion].correct) {
+        score++;
+    }
+    currentQuestion++;
+    loadQuestion();
 }
 
 window.onload = function() {
-    gameInterval = setInterval(gameLoop, 20);
-    setTimeout(() => {
-        clearInterval(gameInterval);
-        if(score < 10) {
-            message.textContent = `⏰ Time's up! You destroyed ${score} Manual targets. Try again! ⏰`;
-        }
-    }, gameTime * 1000);
+    loadQuestion();
+    timer = setInterval(countdown, 1000);
 };
 </script>
 
