@@ -1,155 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Expo Interactive Timed Quiz</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #111;
-            color: white;
-            margin: 0;
-            padding: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            margin-top: 10px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            width: 80%;
-            max-width: 300px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .question {
-            font-size: 20px;
-            padding: 15px;
-            background-color: #333;
-            border-radius: 10px;
-            display: inline-block;
-            margin-bottom: 20px;
-            width: 90%;
-            max-width: 600px;
-        }
-        .timer {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-        .result {
-            margin-top: 20px;
-            font-weight: bold;
-        }
-        .options-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .option-label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        footer {
-            margin-top: 20px;
-            color: #888;
-            font-weight: bold;
-        }
-
-        @media (max-width: 600px) {
-            .question, button {
-                width: 100%;
-            }
-            .option-label {
-                font-size: 14px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Booth Interactive Shooting Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #111;
+      color: white;
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      background-color: #222;
+      display: block;
+      margin: 0 auto;
+      border: 2px solid #4caf50;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 12px;
+      cursor: pointer;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #hud {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin: 8px 0 6px;
+      font-weight: bold;
+      color: #4caf50;
+    }
+    #message {
+      margin-top: 6px;
+      font-size: 18px;
+      color: #4caf50;
+      min-height: 24px;
+    }
+    footer {
+      margin-top: 10px;
+      color: #888;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
+  <h1>🤖 AI Booth Interactive Shooting Game 🚀</h1>
+  <div id="hud">
+    <div>⏱️ Time Left: <span id="time">15</span>s</div>
+    <div>🔫 Shots Left: <span id="shots">30</span></div>
+    <div>🎯 Score: <span id="score">0</span></div>
+  </div>
+  <canvas id="gameCanvas" width="600" height="400"></canvas>
+  <p>Use <b>30 shots</b> in <b>15 seconds</b> to destroy as many <b>Manual</b> targets as you can!</p>
+  <button id="restartBtn">Restart Game</button>
+  <div id="message"></div>
 
-<h1>🤖 AI Expo 30-Second Quiz 🚀</h1>
-<div class="timer" id="timer">Time Left: 30</div>
-<div id="quiz"></div>
-<div class="result" id="result"></div>
+  <footer>Designed by Prashant Rai</footer>
 
-<footer>Designed by Prashant Rai</footer>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-<script>
-const questions = [
-    {question: "Which is a hallmark of Generative AI?", answers: ["Automating repetitive workflows", "Creating original content like text, images, or code", "Predicting weather patterns", "Storing data securely"], correct: 1},
-    {question: "Gemini, Google's AI model, is particularly known for being:", answers: ["Text-only and limited to English", "Multimodal (understanding text, images, and more)", "Hardware-focused for robotics", "Only used in Google Search"], correct: 1},
-    {question: "What’s a key use case of AI in cybersecurity today?", answers: ["Auto-blocking phishing emails", "Automating password creation", "Encrypting Wi-Fi signals", "Replacing firewalls"], correct: 0},
-    {question: "Why is Python popular for AI development?", answers: ["Built-in hardware accelerators", "Simple, rich AI libraries, large community support", "Runs only on supercomputers", "Fastest compiled language"], correct: 1},
-    {question: "Major ethical concern with Gen AI?", answers: ["Slow execution time", "Model hallucinations and misinformation", "File storage limits", "Keyboard shortcuts"], correct: 1},
-    {question: "Which AI chatbot was released first publicly?", answers: ["Google Bard", "OpenAI’s ChatGPT", "Anthropic Claude", "Microsoft Copilot"], correct: 1},
-    {question: "AI in workforce management mainly helps:", answers: ["Adding manual reviews", "Reducing time to go-live and boosting productivity", "Slowing project delivery", "Replacing developers"], correct: 1},
-    {question: "AI tricked into revealing data via cleverly worded prompt is called:", answers: ["Model Drift", "Data Poisoning", "Prompt Injection", "Brute Force"], correct: 2},
-    {question: "Output of Python code `print('AI' * 3)`?", answers: ["AI * 3", "333", "AIAIAI", "Error"], correct: 2},
-    {question: "NOT a realistic short-term application of Gen AI?", answers: ["AI-generated art and music", "Automating code documentation", "Fully autonomous general-purpose human replacement", "Drafting business reports"], correct: 2}
-];
+    const timeEl = document.getElementById('time');
+    const shotsEl = document.getElementById('shots');
+    const scoreEl = document.getElementById('score');
+    const message = document.getElementById('message');
+    const restartBtn = document.getElementById('restartBtn');
 
-let currentQuestion = 0;
-let score = 0;
-let timer;
-let timeLeft = 30;
+    // --- Game Config ---
+    const GAME_TIME = 15; // seconds
+    const MAX_SHOTS = 30; // total shots allowed
 
-function loadQuestion() {
-    if (currentQuestion >= questions.length || timeLeft <= 0) {
-        clearInterval(timer);
-        document.getElementById('quiz').innerHTML = `Quiz Completed! Your score: ${score}/${questions.length}`;
-        document.getElementById('timer').style.display = 'none';
+    // --- State ---
+    let gun, bullets, targets, score, shotsLeft, gameInterval, timerInterval, timeLeft, gameOver;
+
+    function init() {
+      gun = { x: canvas.width / 2, width: 60, height: 20 };
+      bullets = [];
+      targets = [];
+      score = 0;
+      shotsLeft = MAX_SHOTS;
+      timeLeft = GAME_TIME;
+      gameOver = false;
+
+      timeEl.textContent = timeLeft;
+      shotsEl.textContent = shotsLeft;
+      scoreEl.textContent = score;
+      message.textContent = '';
+
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+
+      gameInterval = setInterval(gameLoop, 20);
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    function endGame(reason = '') {
+      if (gameOver) return;
+      gameOver = true;
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+      const summary = `Score: ${score} | Shots used: ${MAX_SHOTS - shotsLeft} / ${MAX_SHOTS}`;
+      if (reason === 'time') {
+        message.textContent = `⏰ Time's up! ${summary}`;
+      } else if (reason === 'shots') {
+        message.textContent = `🔚 Out of shots! ${summary}`;
+      } else {
+        message.textContent = summary;
+      }
+    }
+
+    // --- Drawing ---
+    function drawGun() {
+      ctx.fillStyle = '#4CAF50';
+      ctx.fillRect(gun.x - gun.width / 2, canvas.height - gun.height, gun.width, gun.height);
+      ctx.fillStyle = '#fff';
+      ctx.font = '14px Arial';
+      ctx.fillText('AI', gun.x - 10, canvas.height - 5);
+    }
+
+    function createTarget() {
+      return {
+        x: 20 + Math.random() * (canvas.width - 40),
+        y: -30,
+        size: 24 + Math.random() * 12,
+        speed: 1.2 + Math.random() * 1.8
+      };
+    }
+
+    function drawTarget(t) {
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Arial';
+      ctx.fillText('Manual', t.x - 18, t.y + 4);
+    }
+
+    function shootBullet() {
+      if (gameOver) return;
+      if (shotsLeft <= 0) {
+        endGame('shots');
         return;
+      }
+      bullets.push({ x: gun.x, y: canvas.height - gun.height, speed: 6 });
+      shotsLeft--;
+      shotsEl.textContent = shotsLeft;
+      if (shotsLeft === 0) endGame('shots');
     }
 
-    const q = questions[currentQuestion];
-    document.getElementById('quiz').innerHTML = `
-        <div class="question">${q.question}</div>
-        <div class="options-container">
-            ${q.answers.map((ans, idx) => `
-                <label class="option-label">
-                    <input type="radio" name="answer" value="${idx}">${ans}
-                </label>
-            `).join('')}
-        </div>
-        <button onclick="submitAnswer()">Submit</button>
-    `;
-}
-
-function countdown() {
-    timeLeft--;
-    document.getElementById('timer').textContent = `Time Left: ${timeLeft}`;
-
-    if (timeLeft <= 0) {
-        clearInterval(timer);
-        loadQuestion();
+    function drawBullets() {
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(b.x - 2, b.y, 4, 10);
+        b.y -= b.speed;
+        if (b.y < -10) bullets.splice(i, 1);
+      }
     }
-}
 
-function submitAnswer() {
-    const selectedOption = document.querySelector('input[name="answer"]:checked');
-    if (selectedOption && parseInt(selectedOption.value) === questions[currentQuestion].correct) {
-        score++;
+    function updateTargets() {
+      for (let i = targets.length - 1; i >= 0; i--) {
+        const t = targets[i];
+        t.y += t.speed;
+        if (t.y - t.size > canvas.height) targets.splice(i, 1);
+      }
+      // maintain target count
+      while (targets.length < 3) targets.push(createTarget());
     }
-    currentQuestion++;
-    loadQuestion();
-}
 
-window.onload = function() {
-    loadQuestion();
-    timer = setInterval(countdown, 1000);
-};
-</script>
+    function checkCollisions() {
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        for (let j = targets.length - 1; j >= 0; j--) {
+          const t = targets[j];
+          const dist = Math.hypot(b.x - t.x, b.y - t.y);
+          if (dist < t.size) {
+            // hit
+            targets.splice(j, 1);
+            bullets.splice(i, 1);
+            score++;
+            scoreEl.textContent = score;
+            break;
+          }
+        }
+      }
+    }
 
+    // --- Input ---
+    canvas.addEventListener('mousemove', (e) => {
+      if (gameOver) return;
+      const rect = canvas.getBoundingClientRect();
+      gun.x = e.clientX - rect.left;
+    });
+
+    canvas.addEventListener('click', shootBullet);
+
+    // --- Loop ---
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGun();
+      drawBullets();
+      targets.forEach(drawTarget);
+    }
+
+    function gameLoop() {
+      if (gameOver) return;
+      updateTargets();
+      checkCollisions();
+      render();
+    }
+
+    function tick() {
+      if (gameOver) return;
+      timeLeft--;
+      timeEl.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        endGame('time');
+      }
+    }
+
+    restartBtn.addEventListener('click', init);
+
+    window.onload = init;
+  </script>
 </body>
 </html>
